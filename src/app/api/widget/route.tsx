@@ -1,5 +1,6 @@
 import { ImageResponse } from "@vercel/og";
 import { fetchGitHubStats } from "@/lib/github";
+import { calculateStreaks } from "@/lib/streak";
 
 export const runtime = "edge";
 
@@ -8,6 +9,10 @@ export async function GET(req: Request) {
   const username = searchParams.get("username") || "octocat";
 
   const data = await fetchGitHubStats(username);
+
+  const { currentStreak, longestStreak } = calculateStreaks(
+    data.contributionsCollection.contributionCalendar.weeks
+  );
 
   return new ImageResponse(
     (
@@ -29,36 +34,23 @@ export async function GET(req: Request) {
             <p style={{ margin: 0, fontSize: 20 }}>{username}</p>
           </div>
 
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: "#6b5cff",
-            }}
-          >
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#6b5cff" }}>
             A+
           </div>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 40,
-            marginTop: 40,
-          }}
-        >
+        <div style={{ display: "flex", gap: 40, marginTop: 40 }}>
           <Stat label="Repositories" value={data.repositories.totalCount} />
           <Stat
             label="Contributed to"
             value={data.repositoriesContributedTo.totalCount}
           />
+          <Stat label="Current streak" value={currentStreak} />
+          <Stat label="Longest streak" value={longestStreak} />
         </div>
+
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            marginTop: 40,
-          }}
+          style={{ display: "flex", flexDirection: "column", marginTop: 40 }}
         >
           <span style={{ fontSize: 18, color: "#555" }}>
             Total contributions
