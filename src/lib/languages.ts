@@ -7,22 +7,47 @@ type Repo = {
   };
 };
 
-export function calculateTopLanguages(repos: Repo[], limit = 5) {
-  const map: Record<string, number> = {};
+type LanguageStat = {
+  name: string;
+  percent: number;
+};
+
+export function calculateTopLanguages(
+  repos: Repo[],
+  limit = 6
+): LanguageStat[] {
+  const sizeMap: Record<string, number> = {};
 
   for (const repo of repos) {
-    for (const lang of repo.languages.edges) {
-      map[lang.node.name] = (map[lang.node.name] || 0) + lang.size;
+    for (const edge of repo.languages.edges) {
+      sizeMap[edge.node.name] = (sizeMap[edge.node.name] || 0) + edge.size;
     }
   }
 
-  const total = Object.values(map).reduce((a, b) => a + b, 0);
+  const entries = Object.entries(sizeMap).sort((a, b) => b[1] - a[1]);
+  const top = entries.slice(0, limit);
 
-  return Object.entries(map)
-    .map(([name, size]) => ({
+  const totalSize = top.reduce((sum, [, size]) => sum + size, 0);
+  if (totalSize === 0) return [];
+
+  const normalized: LanguageStat[] = [];
+  let accumulated = 0;
+
+  for (let i = 0; i < top.length; i++) {
+    const [name, size] = top[i];
+
+    const percent =
+      i === top.length - 1
+        ? 100 - accumulated
+        : Math.round((size / totalSize) * 100);
+
+    accumulated += percent;
+
+    normalized.push({
       name,
-      percent: Math.round((size / total) * 100),
-    }))
-    .sort((a, b) => b.percent - a.percent)
-    .slice(0, limit);
+      percent,
+    });
+  }
+
+  return normalized;
 }
