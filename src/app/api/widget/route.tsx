@@ -12,32 +12,21 @@ const LANGUAGE_COLORS: Record<string, string> = {
   SCSS: "#c6538c",
   Liquid: "#7ab0d6",
   TypeScript: "#3178c6",
-  Vue: "#41b883",
-  Python: "#3572A5",
-  Go: "#00ADD8",
-  Java: "#b07219",
-  "C#": "#178600",
-  PHP: "#4F5D95",
-  Ruby: "#701516",
-  Kotlin: "#A97BFF",
-  Swift: "#F05138",
-  Rust: "#dea584",
 };
 
 function getLangColor(name: string) {
   return LANGUAGE_COLORS[name] || "#9ca3af";
 }
 
-function normalizeTopLanguages(
+function normalizeLanguages(
   langs: { name: string; percent: number }[],
   limit = 6
 ) {
   const sliced = langs.slice(0, limit);
-  const total = sliced.reduce((sum, l) => sum + l.percent, 0);
+  const total = sliced.reduce((s, l) => s + l.percent, 0);
+  if (!total) return [];
 
-  if (sliced.length === 0 || total === 0) return [];
-
-  const normalized = sliced.map((l, i) => {
+  return sliced.map((l, i) => {
     const value =
       i === sliced.length - 1
         ? 100 -
@@ -48,8 +37,6 @@ function normalizeTopLanguages(
 
     return { name: l.name, percent: value };
   });
-
-  return normalized;
 }
 
 export async function GET(req: Request) {
@@ -57,96 +44,118 @@ export async function GET(req: Request) {
   const username = searchParams.get("username") || "octocat";
 
   const data = await fetchGitHubStats(username);
-
   const { currentStreak, longestStreak } = calculateStreaks(
     data.contributionsCollection.contributionCalendar.weeks
   );
 
   const rawLanguages = calculateTopLanguages(data.repositories.nodes, 6);
-  const languages = normalizeTopLanguages(rawLanguages, 6);
+  const languages = normalizeLanguages(rawLanguages, 6);
+
+  const half = Math.ceil(languages.length / 2);
+  const left = languages.slice(0, half);
+  const right = languages.slice(half);
 
   return new ImageResponse(
     (
       <div
         style={{
+          display: "flex",
           width: "100%",
           height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          padding: 22,
+          padding: 20,
           background: "#ffffff",
           fontFamily:
             "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto",
           color: "#09090b",
+          gap: 24,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 10,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-            }}
-          >
-            <div style={{ display: "flex", fontSize: 20, fontWeight: 600 }}>
-              GitHub Stats · {username}
-            </div>
-            <div style={{ display: "flex", fontSize: 13, color: "#71717a" }}>
-              Repos {data.repositories.totalCount} · Contributed{" "}
-              {data.repositoriesContributedTo.totalCount}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              fontSize: 16,
-              fontWeight: 600,
-              color: "#6366f1",
-            }}
-          >
-            A+
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 14,
-            marginBottom: 12,
-            fontSize: 13,
-            color: "#09090b",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex" }}>
-            Contributions{" "}
-            {
-              data.contributionsCollection.contributionCalendar
-                .totalContributions
-            }
-          </div>
-          <div style={{ display: "flex", color: "#71717a" }}>•</div>
-          <div style={{ display: "flex" }}>Streak {currentStreak}</div>
-          <div style={{ display: "flex", color: "#71717a" }}>•</div>
-          <div style={{ display: "flex" }}>Longest {longestStreak}</div>
-        </div>
-
+        {/* LEFT BLOCK */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
+            flex: 1,
+            gap: 10,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ display: "flex", fontSize: 18, fontWeight: 600 }}>
+              GitHub Stats · {username}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#6366f1",
+              }}
+            >
+              A+
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              fontSize: 12,
+              color: "#71717a",
+            }}
+          >
+            <div style={{ display: "flex" }}>
+              Repos {data.repositories.totalCount}
+            </div>
+            <div style={{ display: "flex" }}>·</div>
+            <div style={{ display: "flex" }}>
+              Contributed {data.repositoriesContributedTo.totalCount}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              fontSize: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ display: "flex" }}>
+              Contributions{" "}
+              {
+                data.contributionsCollection.contributionCalendar
+                  .totalContributions
+              }
+            </div>
+            <div style={{ display: "flex", color: "#71717a" }}>·</div>
+            <div style={{ display: "flex" }}>Streak {currentStreak}</div>
+            <div style={{ display: "flex", color: "#71717a" }}>·</div>
+            <div style={{ display: "flex" }}>Longest {longestStreak}</div>
+          </div>
+        </div>
+
+        {/* RIGHT BLOCK */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1.1,
             gap: 8,
           }}
         >
-          <div style={{ display: "flex", fontSize: 13, color: "#71717a" }}>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 12,
+              color: "#71717a",
+            }}
+          >
             Most Used Languages
           </div>
 
@@ -154,7 +163,7 @@ export async function GET(req: Request) {
             style={{
               display: "flex",
               width: "100%",
-              height: 10,
+              height: 8,
               borderRadius: 999,
               overflow: "hidden",
               background: "#e5e7eb",
@@ -175,43 +184,84 @@ export async function GET(req: Request) {
           <div
             style={{
               display: "flex",
-              flexWrap: "wrap",
-              rowGap: 10,
-              columnGap: 14,
-              fontSize: 13,
+              gap: 20,
+              fontSize: 12,
             }}
           >
-            {languages.map((lang) => (
-              <div
-                key={lang.name}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  width: "48%",
-                  gap: 8,
-                }}
-              >
+            {/* LEFT COLUMN */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                flex: 1,
+              }}
+            >
+              {left.map((lang) => (
                 <div
+                  key={lang.name}
                   style={{
                     display: "flex",
-                    width: 10,
-                    height: 10,
-                    borderRadius: 999,
-                    background: getLangColor(lang.name),
+                    alignItems: "center",
+                    gap: 6,
                   }}
-                />
-                <div style={{ display: "flex" }}>
-                  {lang.name} {lang.percent}%
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      width: 8,
+                      height: 8,
+                      borderRadius: 999,
+                      background: getLangColor(lang.name),
+                    }}
+                  />
+                  <div style={{ display: "flex" }}>
+                    {lang.name} {lang.percent}%
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                flex: 1,
+              }}
+            >
+              {right.map((lang) => (
+                <div
+                  key={lang.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      width: 8,
+                      height: 8,
+                      borderRadius: 999,
+                      background: getLangColor(lang.name),
+                    }}
+                  />
+                  <div style={{ display: "flex" }}>
+                    {lang.name} {lang.percent}%
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     ),
     {
       width: 900,
-      height: 260,
+      height: 240,
       headers: {
         "Cache-Control": "public, max-age=3600",
       },
