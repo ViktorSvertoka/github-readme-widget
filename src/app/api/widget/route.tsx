@@ -1,6 +1,7 @@
 import { ImageResponse } from "@vercel/og";
 import { fetchGitHubStats } from "@/lib/github";
 import { calculateStreaks } from "@/lib/streak";
+import { calculateTopLanguages } from "@/lib/languages";
 
 export const runtime = "edge";
 
@@ -13,6 +14,8 @@ export async function GET(req: Request) {
   const { currentStreak, longestStreak } = calculateStreaks(
     data.contributionsCollection.contributionCalendar.weeks
   );
+
+  const topLanguages = calculateTopLanguages(data.repositories.nodes);
 
   return new ImageResponse(
     (
@@ -28,18 +31,58 @@ export async function GET(req: Request) {
             "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <h1 style={{ fontSize: 36, margin: 0 }}>GitHub Readme Widget</h1>
-            <p style={{ margin: 0, fontSize: 20 }}>{username}</p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                fontSize: 36,
+                fontWeight: 700,
+              }}
+            >
+              GitHub Readme Widget
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                fontSize: 20,
+              }}
+            >
+              {username}
+            </div>
           </div>
 
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#6b5cff" }}>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 28,
+              fontWeight: 700,
+              color: "#6b5cff",
+            }}
+          >
             A+
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 40, marginTop: 40 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 40,
+            marginTop: 40,
+          }}
+        >
           <Stat label="Repositories" value={data.repositories.totalCount} />
           <Stat
             label="Contributed to"
@@ -50,17 +93,68 @@ export async function GET(req: Request) {
         </div>
 
         <div
-          style={{ display: "flex", flexDirection: "column", marginTop: 40 }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            marginTop: 40,
+            gap: 8,
+          }}
         >
-          <span style={{ fontSize: 18, color: "#555" }}>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 18,
+              color: "#555",
+            }}
+          >
             Total contributions
-          </span>
-          <span style={{ fontSize: 42, fontWeight: 700 }}>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              fontSize: 42,
+              fontWeight: 700,
+            }}
+          >
             {
               data.contributionsCollection.contributionCalendar
                 .totalContributions
             }
-          </span>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            marginTop: 40,
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              fontSize: 18,
+              color: "#555",
+            }}
+          >
+            Most Used Languages
+          </div>
+
+          {topLanguages.map((lang) => (
+            <div
+              key={lang.name}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 16,
+              }}
+            >
+              <div style={{ display: "flex" }}>{lang.name}</div>
+              <div style={{ display: "flex" }}>{lang.percent}%</div>
+            </div>
+          ))}
         </div>
       </div>
     ),
@@ -76,9 +170,32 @@ export async function GET(req: Request) {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      <span style={{ fontSize: 16, color: "#666" }}>{label}</span>
-      <span style={{ fontSize: 28, fontWeight: 600 }}>{value}</span>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          fontSize: 16,
+          color: "#666",
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          fontSize: 28,
+          fontWeight: 600,
+        }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
