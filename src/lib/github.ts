@@ -1,11 +1,45 @@
 const GITHUB_API_URL = "https://api.github.com/graphql";
 
-type GitHubResponse<T> = {
-  data?: T;
-  errors?: { message: string }[];
+type GraphQLError = {
+  message: string;
 };
 
-export async function fetchGitHubStats(username: string) {
+type GitHubResponse<T> = {
+  data?: T;
+  errors?: GraphQLError[];
+};
+
+type GitHubUser = {
+  contributionsCollection: {
+    contributionCalendar: {
+      totalContributions: number;
+      weeks: {
+        contributionDays: {
+          contributionCount: number;
+          date: string;
+        }[];
+      }[];
+    };
+  };
+  repositories: {
+    totalCount: number;
+    nodes: {
+      languages: {
+        edges: {
+          size: number;
+          node: {
+            name: string;
+          };
+        }[];
+      };
+    }[];
+  };
+  repositoriesContributedTo: {
+    totalCount: number;
+  };
+};
+
+export async function fetchGitHubStats(username: string): Promise<GitHubUser> {
   const query = `
     query ($login: String!) {
       user(login: $login) {
@@ -49,7 +83,6 @@ export async function fetchGitHubStats(username: string) {
     headers: {
       Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
       "Content-Type": "application/json",
-      Accept: "application/json",
     },
     body: JSON.stringify({
       query,
@@ -59,17 +92,15 @@ export async function fetchGitHubStats(username: string) {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(
-      `GitHub API error: ${res.status} ${res.statusText}\n${text}`
-    );
+    throw new Error(`GitHub API HTTP error ${res.status}: ${text}`);
   }
 
-  const json = (await res.json()) as GitHubResponse<any>;
+  const json = (await res.json()) as GitHubResponse<{
+    user: GitHubUser | null;
+  }>;
 
   if (json.errors?.length) {
-    throw new Error(
-      `GitHub GraphQL error: ${json.errors.map((e) => e.message).join(", ")}`
-    );
+    throw new Error(json.errors.map((e) => e.message).join(", "));
   }
 
   if (!json.data?.user) {
