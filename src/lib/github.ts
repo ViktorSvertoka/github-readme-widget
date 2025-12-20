@@ -1,3 +1,10 @@
+const GITHUB_API_URL = "https://api.github.com/graphql";
+
+type GitHubResponse<T> = {
+  data?: T;
+  errors?: { message: string }[];
+};
+
 export async function fetchGitHubStats(username: string) {
   const query = `
     query ($login: String!) {
@@ -13,8 +20,22 @@ export async function fetchGitHubStats(username: string) {
             }
           }
         }
-        repositories(ownerAffiliations: OWNER, isFork: false) {
+        repositories(
+          first: 100
+          ownerAffiliations: OWNER
+          isFork: false
+        ) {
           totalCount
+          nodes {
+            languages(first: 10) {
+              edges {
+                size
+                node {
+                  name
+                }
+              }
+            }
+          }
         }
         repositoriesContributedTo {
           totalCount
@@ -23,11 +44,12 @@ export async function fetchGitHubStats(username: string) {
     }
   `;
 
-  const res = await fetch("https://api.github.com/graphql", {
+  const res = await fetch(GITHUB_API_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
       "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({
       query,
@@ -35,6 +57,24 @@ export async function fetchGitHubStats(username: string) {
     }),
   });
 
-  const json = await res.json();
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(
+      `GitHub API error: ${res.status} ${res.statusText}\n${text}`
+    );
+  }
+
+  const json = (await res.json()) as GitHubResponse<any>;
+
+  if (json.errors?.length) {
+    throw new Error(
+      `GitHub GraphQL error: ${json.errors.map((e) => e.message).join(", ")}`
+    );
+  }
+
+  if (!json.data?.user) {
+    throw new Error("GitHub user not found");
+  }
+
   return json.data.user;
 }
