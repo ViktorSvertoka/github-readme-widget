@@ -41,7 +41,28 @@ function normalizeLanguages(
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
+
   const username = searchParams.get("username") || "octocat";
+  const theme = searchParams.get("theme") === "dark" ? "dark" : "light";
+
+  const COLORS =
+    theme === "dark"
+      ? {
+          bg: "#09090b",
+          text: "#fafafa",
+          muted: "#a1a1aa",
+          border: "#27272a",
+          barBg: "#27272a",
+          accent: "#6366f1",
+        }
+      : {
+          bg: "#f7f8fa",
+          text: "#09090b",
+          muted: "#71717a",
+          border: "#e5e7eb",
+          barBg: "#e5e7eb",
+          accent: "#6366f1",
+        };
 
   const data = await fetchGitHubStats(username);
   const { currentStreak, longestStreak } = calculateStreaks(
@@ -63,10 +84,12 @@ export async function GET(req: Request) {
           width: "100%",
           height: "100%",
           padding: 20,
-          background: "#ffffff",
+          background: COLORS.bg,
+          color: COLORS.text,
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 12,
           fontFamily:
             "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto",
-          color: "#09090b",
           gap: 24,
         }}
       >
@@ -94,7 +117,7 @@ export async function GET(req: Request) {
                 display: "flex",
                 fontSize: 14,
                 fontWeight: 600,
-                color: "#6366f1",
+                color: COLORS.accent,
               }}
             >
               A+
@@ -106,7 +129,7 @@ export async function GET(req: Request) {
               display: "flex",
               gap: 6,
               fontSize: 12,
-              color: "#71717a",
+              color: COLORS.muted,
             }}
           >
             <div style={{ display: "flex" }}>
@@ -133,9 +156,9 @@ export async function GET(req: Request) {
                   .totalContributions
               }
             </div>
-            <div style={{ display: "flex", color: "#71717a" }}>·</div>
+            <div style={{ display: "flex", color: COLORS.muted }}>·</div>
             <div style={{ display: "flex" }}>Streak {currentStreak}</div>
-            <div style={{ display: "flex", color: "#71717a" }}>·</div>
+            <div style={{ display: "flex", color: COLORS.muted }}>·</div>
             <div style={{ display: "flex" }}>Longest {longestStreak}</div>
           </div>
         </div>
@@ -153,7 +176,7 @@ export async function GET(req: Request) {
             style={{
               display: "flex",
               fontSize: 12,
-              color: "#71717a",
+              color: COLORS.muted,
             }}
           >
             Most Used Languages
@@ -166,7 +189,7 @@ export async function GET(req: Request) {
               height: 8,
               borderRadius: 999,
               overflow: "hidden",
-              background: "#e5e7eb",
+              background: COLORS.barBg,
             }}
           >
             {languages.map((lang) => (
