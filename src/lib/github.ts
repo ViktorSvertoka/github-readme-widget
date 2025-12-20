@@ -2,14 +2,19 @@ export async function fetchGitHubStats(username: string) {
   const query = `
     query ($login: String!) {
       user(login: $login) {
-        name
-        repositories(ownerAffiliations: OWNER, isFork: false) {
-          totalCount
-        }
         contributionsCollection {
           contributionCalendar {
             totalContributions
+            weeks {
+              contributionDays {
+                contributionCount
+                date
+              }
+            }
           }
+        }
+        repositories(ownerAffiliations: OWNER, isFork: false) {
+          totalCount
         }
         repositoriesContributedTo {
           totalCount
