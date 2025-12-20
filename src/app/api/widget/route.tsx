@@ -7,15 +7,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const username = searchParams.get("username") || "octocat";
 
-  let totalContributions = 0;
-
-  try {
-    const data = await fetchGitHubStats(username);
-    totalContributions =
-      data.contributionsCollection.contributionCalendar.totalContributions;
-  } catch {
-    totalContributions = 0;
-  }
+  const data = await fetchGitHubStats(username);
 
   return new ImageResponse(
     (
@@ -25,21 +17,58 @@ export async function GET(req: Request) {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
           padding: 48,
           background: "#f6f8fa",
           fontFamily:
             "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <h1 style={{ fontSize: 40, margin: 0 }}>GitHub Readme Widget</h1>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <h1 style={{ fontSize: 36, margin: 0 }}>GitHub Readme Widget</h1>
+            <p style={{ margin: 0, fontSize: 20 }}>{username}</p>
+          </div>
 
-          <p style={{ fontSize: 24, margin: 0 }}>User: {username}</p>
+          <div
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              color: "#6b5cff",
+            }}
+          >
+            A+
+          </div>
+        </div>
 
-          <p style={{ fontSize: 22, margin: 0 }}>
-            Total contributions: {totalContributions}
-          </p>
+        <div
+          style={{
+            display: "flex",
+            gap: 40,
+            marginTop: 40,
+          }}
+        >
+          <Stat label="Repositories" value={data.repositories.totalCount} />
+          <Stat
+            label="Contributed to"
+            value={data.repositoriesContributedTo.totalCount}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            marginTop: 40,
+          }}
+        >
+          <span style={{ fontSize: 18, color: "#555" }}>
+            Total contributions
+          </span>
+          <span style={{ fontSize: 42, fontWeight: 700 }}>
+            {
+              data.contributionsCollection.contributionCalendar
+                .totalContributions
+            }
+          </span>
         </div>
       </div>
     ),
@@ -50,5 +79,14 @@ export async function GET(req: Request) {
         "Cache-Control": "public, max-age=3600",
       },
     }
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <span style={{ fontSize: 16, color: "#666" }}>{label}</span>
+      <span style={{ fontSize: 28, fontWeight: 600 }}>{value}</span>
+    </div>
   );
 }
