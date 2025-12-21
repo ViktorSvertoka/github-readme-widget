@@ -93,7 +93,6 @@ export async function GET(req: Request) {
           gap: 24,
         }}
       >
-        {/* LEFT BLOCK */}
         <div
           style={{
             display: "flex",
@@ -123,7 +122,6 @@ export async function GET(req: Request) {
               A+
             </div>
           </div>
-
           <div
             style={{
               display: "flex",
@@ -162,8 +160,6 @@ export async function GET(req: Request) {
             <div style={{ display: "flex" }}>Longest {longestStreak}</div>
           </div>
         </div>
-
-        {/* RIGHT BLOCK */}
         <div
           style={{
             display: "flex",
@@ -211,7 +207,6 @@ export async function GET(req: Request) {
               fontSize: 12,
             }}
           >
-            {/* LEFT COLUMN */}
             <div
               style={{
                 display: "flex",
@@ -244,8 +239,6 @@ export async function GET(req: Request) {
                 </div>
               ))}
             </div>
-
-            {/* RIGHT COLUMN */}
             <div
               style={{
                 display: "flex",
@@ -286,6 +279,7 @@ export async function GET(req: Request) {
       width: 900,
       height: 240,
       headers: {
+        "Content-Type": "image/png",
         "Cache-Control": "public, max-age=3600",
       },
     }
